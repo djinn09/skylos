@@ -23,8 +23,10 @@ def deeply_nested():
     let line_index = LineIndex::new(source);
     let mut visitor = QualityVisitor::new(PathBuf::from("test.py"), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     assert!(visitor.findings.len() > 0, "Should detect deeply nested code");
@@ -44,8 +46,10 @@ def normal_function():
     let line_index = LineIndex::new(source);
     let mut visitor = QualityVisitor::new(PathBuf::from("test.py"), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     // Should not flag normal nesting (depth <= 5)
