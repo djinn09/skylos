@@ -17,8 +17,10 @@ def my_function():
     let line_index = LineIndex::new(source);
     let mut visitor = SkylosVisitor::new(PathBuf::from("test.py"), "test".to_string(), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     // Should detect one function definition
@@ -42,8 +44,10 @@ class MyClass:
     let line_index = LineIndex::new(source);
     let mut visitor = SkylosVisitor::new(PathBuf::from("test.py"), "test".to_string(), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     // Should detect class and its methods
@@ -67,8 +71,10 @@ from pathlib import Path
     let line_index = LineIndex::new(source);
     let mut visitor = SkylosVisitor::new(PathBuf::from("test.py"), "test".to_string(), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     // Should detect imports
@@ -94,8 +100,10 @@ def main():
     let line_index = LineIndex::new(source);
     let mut visitor = SkylosVisitor::new(PathBuf::from("test.py"), "test".to_string(), &line_index);
     
-    for stmt in &tree.body {
-        visitor.visit_stmt(stmt);
+    if let rustpython_ast::Mod::Module(module) = tree {
+        for stmt in &module.body {
+            visitor.visit_stmt(stmt);
+        }
     }
     
     // Should detect reference to 'helper'
