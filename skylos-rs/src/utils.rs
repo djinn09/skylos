@@ -39,7 +39,8 @@ impl LineIndex {
 /// Returns a set of line numbers (1-indexed) that should be ignored by the analyzer.
 /// This allows users to suppress false positives or intentionally ignore specific lines.
 pub fn get_ignored_lines(source: &str) -> HashSet<usize> {
-    source.lines()
+    source
+        .lines()
         .enumerate()
         .filter(|(_, line)| line.contains("pragma: no skylos"))
         .map(|(i, _)| i + 1)
@@ -63,7 +64,7 @@ class MyClass:  # pragma: no skylos
     pass
 "#;
         let ignored = get_ignored_lines(source);
-        
+
         // Lines 5 and 8 should be ignored (1-indexed)
         assert!(ignored.contains(&5), "Should detect pragma on line 5");
         assert!(ignored.contains(&8), "Should detect pragma on line 8");

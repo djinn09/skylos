@@ -1,6 +1,6 @@
-use rustpython_ast::{self as ast, Stmt, Expr};
-use std::collections::HashSet;
 use crate::utils::LineIndex;
+use rustpython_ast::{self as ast, Expr, Stmt};
+use std::collections::HashSet;
 
 /// Lazy static initialization for known framework modules.
 /// These libraries are commonly used in Python web development and data processing.
@@ -92,14 +92,14 @@ impl<'a> FrameworkAwareVisitor<'a> {
                     if let Expr::Name(name_node) = base {
                         let id = name_node.id.to_lowercase();
                         if id.contains("view") || id.contains("model") || id.contains("schema") {
-                             self.is_framework_file = true;
-                             // Mark this class as framework-related.
-                             let line = self.line_index.line_index(node.range.start());
-                             self.framework_decorated_lines.insert(line);
+                            self.is_framework_file = true;
+                            // Mark this class as framework-related.
+                            let line = self.line_index.line_index(node.range.start());
+                            self.framework_decorated_lines.insert(line);
                         }
                     }
                 }
-                
+
                 // Recursively visit the body of the class.
                 for stmt in &node.body {
                     self.visit_stmt(stmt);
@@ -132,7 +132,7 @@ impl<'a> FrameworkAwareVisitor<'a> {
             Expr::Call(node) => {
                 // For decorators with arguments like @app.route("/path")
                 self.get_decorator_name(&node.func)
-            },
+            }
             _ => String::new(),
         }
     }
@@ -141,12 +141,12 @@ impl<'a> FrameworkAwareVisitor<'a> {
     fn is_framework_decorator(&self, name: &str) -> bool {
         let name = name.to_lowercase();
         // Common patterns in Flask, FastAPI, Celery, etc.
-        name.contains("route") || 
-        name.contains("get") || 
-        name.contains("post") || 
-        name.contains("put") || 
-        name.contains("delete") ||
-        name.contains("validator") ||
-        name.contains("task") // celery
+        name.contains("route")
+            || name.contains("get")
+            || name.contains("post")
+            || name.contains("put")
+            || name.contains("delete")
+            || name.contains("validator")
+            || name.contains("task") // celery
     }
 }

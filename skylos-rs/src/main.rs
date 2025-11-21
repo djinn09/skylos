@@ -1,17 +1,16 @@
 pub mod analyzer;
-pub mod visitor;
-pub mod framework;
-pub mod test_utils;
-pub mod rules;
-pub mod utils;
 pub mod entry_point;
+pub mod framework;
+pub mod rules;
+pub mod test_utils;
+pub mod utils;
+pub mod visitor;
 
-
-use clap::Parser;
-use std::path::PathBuf;
-use anyhow::Result;
 use crate::analyzer::Skylos;
+use anyhow::Result;
+use clap::Parser;
 use colored::*;
+use std::path::PathBuf;
 
 /// Command line interface configuration using `clap`.
 /// This struct defines the arguments and flags accepted by the program.
@@ -59,13 +58,13 @@ fn main() -> Result<()> {
     // Parse command line arguments using the Cli struct definition.
     // This allows users to configure the analysis via CLI flags.
     let cli = Cli::parse();
-    
+
     // If JSON output is not requested, print a friendly message indicating the start of analysis.
     // This gives immediate feedback to the user that the process is running.
     if !cli.json {
         println!("Analyzing path: {:?}", cli.path);
     }
-    
+
     // Initialize the Skylos analyzer with the configuration from CLI.
     // We pass the confidence threshold and boolean flags for different types of checks.
     // This sets up the analyzer state before running on files.
@@ -76,7 +75,7 @@ fn main() -> Result<()> {
     // It returns a Result containing the AnalysisResult struct or an error.
     // We propagate any error with `?`.
     let result = skylos.analyze(&cli.path)?;
-    
+
     // Check if JSON output was requested.
     if cli.json {
         // Serialize the result struct to a pretty-printed JSON string.
@@ -89,12 +88,15 @@ fn main() -> Result<()> {
         // Print the header with bold text for visibility.
         println!("\n{}", "Python Static Analysis Results".bold());
         println!("===================================\n");
-        
+
         // Print a summary of findings.
         // We check each category and print the count if it's not empty.
         println!("Summary:");
         if !result.unused_functions.is_empty() {
-            println!(" * Unreachable functions: {}", result.unused_functions.len());
+            println!(
+                " * Unreachable functions: {}",
+                result.unused_functions.len()
+            );
         }
         if !result.unused_imports.is_empty() {
             println!(" * Unused imports: {}", result.unused_imports.len());
@@ -125,7 +127,7 @@ fn main() -> Result<()> {
                 println!("    └─ {}:{}", func.file.display(), func.line);
             }
         }
-        
+
         // List unused imports if any found.
         // Similarly, print details for unused imports.
         if !result.unused_imports.is_empty() {
@@ -143,7 +145,15 @@ fn main() -> Result<()> {
             println!("\n - Security Issues");
             println!("================");
             for (i, f) in result.danger.iter().enumerate() {
-                println!(" {}. {} [{}] ({}:{}) Severity: {}", i + 1, f.message, f.rule_id, f.file.display(), f.line, f.severity);
+                println!(
+                    " {}. {} [{}] ({}:{}) Severity: {}",
+                    i + 1,
+                    f.message,
+                    f.rule_id,
+                    f.file.display(),
+                    f.line,
+                    f.severity
+                );
             }
         }
 
@@ -153,7 +163,15 @@ fn main() -> Result<()> {
             println!("\n - Secrets");
             println!("==========");
             for (i, s) in result.secrets.iter().enumerate() {
-                println!(" {}. {} [{}] ({}:{}) Severity: {}", i + 1, s.message, s.rule_id, s.file.display(), s.line, s.severity);
+                println!(
+                    " {}. {} [{}] ({}:{}) Severity: {}",
+                    i + 1,
+                    s.message,
+                    s.rule_id,
+                    s.file.display(),
+                    s.line,
+                    s.severity
+                );
             }
         }
 
@@ -163,11 +181,19 @@ fn main() -> Result<()> {
             println!("\n - Quality Issues");
             println!("================");
             for (i, q) in result.quality.iter().enumerate() {
-                println!(" {}. {} [{}] ({}:{}) Severity: {}", i + 1, q.message, q.rule_id, q.file.display(), q.line, q.severity);
+                println!(
+                    " {}. {} [{}] ({}:{}) Severity: {}",
+                    i + 1,
+                    q.message,
+                    q.rule_id,
+                    q.file.display(),
+                    q.line,
+                    q.severity
+                );
             }
         }
     }
-    
+
     // Return Ok(()) to indicate successful execution.
     Ok(())
 }

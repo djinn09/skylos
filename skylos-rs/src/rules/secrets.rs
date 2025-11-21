@@ -39,7 +39,7 @@ lazy_static::lazy_static! {
 /// This function iterates through the file line by line and applies the regex patterns.
 pub fn scan_secrets(content: &str, file_path: &PathBuf) -> Vec<SecretFinding> {
     let mut findings = Vec::new();
-    
+
     for (line_idx, line) in content.lines().enumerate() {
         // Skip full-line comments to reduce false positives.
         // TODO: Improve comment detection (e.g., inline comments).
@@ -60,6 +60,6 @@ pub fn scan_secrets(content: &str, file_path: &PathBuf) -> Vec<SecretFinding> {
             }
         }
     }
-    
+
     findings
 }
