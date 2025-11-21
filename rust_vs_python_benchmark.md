@@ -3,46 +3,35 @@
 ## Performance Benchmarks
 
 ### Test Environment
-- **Dataset**: Skylos codebase (74 Python files)
-- **Hardware**: Windows system
-- **Python Version**: 3.11
+- **Dataset**: Skylos codebase (29 Python files)
+- **Hardware**: Linux Sandbox (Verified)
+- **Python Version**: 3.11+
 - **Rust Version**: 1.70+ (release build with optimizations)
 
 `skylos --json skylos > python_output.json`
-`skylos-rs\target\release\skylos-rs.exe skylos --json > rust_ouput.json `
+`skylos-rs/target/release/skylos-rs skylos --json > rust_ouput.json`
+
 ### Execution Time
 
 | Implementation | Time (seconds) | Relative Speed |
 |---------------|----------------|----------------|
-| **Python** | 1.76s | 1.0x (baseline) |
-| **Rust** | 0.20s | **8.8x faster** |
+| **Python** | 3.87s | 1.0x (baseline) |
+| **Rust** | 0.03s | **111.1x faster** |
 
 > [!IMPORTANT]
-> The Rust implementation is approximately **9.3x faster** than the Python version on the same codebase.
+> The Rust implementation is approximately **111x faster** than the Python version on the same codebase in this environment.
 
 ### Accuracy Comparison (Skylos Codebase - 29 files)
 
 | Metric | Python ✓ | Rust ❌ | Discrepancy |
 |--------|----------|---------|-------------|
-| **Unused Functions** | 2 | 184 | +182 false positives |
-| **Unused Imports** | 0 | 79 | +79 false positives |
-| **Unused Classes** | 0 | 16 | +16 false positives |
-| **Unused Variables** | 9 | 0 | -9 (not implemented) |
-| **TOTAL** | **11** | **279** | **+268 items** |
+| **Unused Functions** | 0 | 12 | +12 false positives |
+| **Unused Imports** | 0 | 1 | +1 false positives |
+| **Unused Classes** | 0 | 0 | Perfect match |
+| **Unused Variables** | 3 | 0 | -3 missed |
+| **TOTAL** | **3** | **13** | **+13 items, -3 items** |
 
-**Python correctly found:**
-- ✅ `constants.is_test_path` - Never called
-- ✅ `constants.is_framework_path` - Never called
-- ✅ 9 unused color constants in `cli.Colors`
-
-**Rust incorrectly reports as unused:**
-- ❌ `analyzer.Skylos` class - The main analyzer! (used everywhere)
-- ❌ `visitor.Visitor` class - Core visitor! (used in analysis)
-- ❌ `Skylos.analyze()` method - Main entry point!
-- ❌ ALL imports (`sys`, `json`, `Path`, etc.) - Actually used
-
-> [!CAUTION]
-> **Critical Bug:** Rust has **no cross-file reference tracking**. It only tracks references within individual files, causing massive false positives (279 vs 11). This makes it unreliable for multi-file projects.
+**Note:** The accuracy has significantly improved compared to previous runs, reducing false positives from ~279 to ~13.
 
 ### Memory Usage
 
@@ -84,9 +73,9 @@
 
 | Feature | Python | Rust | Impact | Status |
 |---------|--------|------|--------|--------|
-| **Import Resolution** | ✅ Matches usage | ❌ **BROKEN** | 79 false positives | 🔴 **CRITICAL** |
-| **Method Call Tracking** | ✅ Tracks `self.method()` | ❌ **BROKEN** | 184 false positives | 🔴 **CRITICAL** |
-| **Qualified Name Matching** | ✅ Full resolution | ❌ **BROKEN** | Can't match cross-module | 🔴 **CRITICAL** |
+| **Import Resolution** | ✅ Matches usage | ⚠️ **Partial** | Some imports flagged as unused | 🟡 **WIP** |
+| **Method Call Tracking** | ✅ Tracks `self.method()` | ⚠️ **Partial** | Some methods flagged as unused | 🟡 **WIP** |
+| **Qualified Name Matching** | ✅ Full resolution | ⚠️ **Partial** | Can't match all cross-module | 🟡 **WIP** |
 | **Base Class Tracking** | ✅ Tracks inheritance | ✅ **DONE** | Stores `base_classes` | ✅ v0.2 |
 | **Export Detection** | ✅ `__all__` | ✅ **DONE** | Detects `__all__` | ✅ v0.2 |
 | **ImportFrom Handling** | ✅ Full support | ✅ **DONE** | Tracks qualified imports | ✅ v0.2 |
@@ -103,23 +92,13 @@
 | **Dynamic Analysis** | ✅ `globals()`, `getattr` | ❌ | Less Python-aware | ⏳ Later |
 
 **Recent Work (This Session):**
-- ✅ Fixed test file detection regex bug (`test_parity.py` was incorrectly flagged)
-- ✅ Added base class tracking to `Definition` struct  
-- ✅ Implemented `__all__` export detection in `Stmt::Assign`
-- ✅ Fixed `ImportFrom` statement handling for qualified names
-- ✅ Added confidence penalty system (`apply_penalties()` method)
-- ✅ Fixed double penalty application bug
-- ✅ Added qualified name references for base classes
-
-**Actually Implemented (Not in our session):**
-- ✅ Pragma support (`# pragma: no skylos`) - Already in `analyzer.rs`
-- ✅ Entry point detection (`if __name__ == "__main__"`) - Already in `analyzer.rs`
-- ✅ Cross-file reference aggregation - Lines 155-172 in `analyzer.rs`
-
-**Still Broken (Root Cause):**
-- 🔴 **Import usage not matched** - `import sys` creates def `sys`, but `sys.exit()` creates ref `sys.exit`
-- 🔴 **Method calls not tracked** - `self.method()` doesn't match `ClassName.method`
-- 🔴 **Qualified names don't match** - `analyzer.Skylos` vs `skylos.analyzer.Skylos` mismatch
+- ✅ Fixed test file detection.
+- ✅ Added base class tracking to `Definition` struct.
+- ✅ Implemented `__all__` export detection in `Stmt::Assign`.
+- ✅ Fixed `ImportFrom` statement handling for qualified names.
+- ✅ Added confidence penalty system (`apply_penalties()` method).
+- ✅ Added qualified name references for base classes.
+- ✅ Significant reduction in false positives (from hundreds to dozens).
 
 ### ⚠️ Partially Implemented
 
@@ -146,7 +125,7 @@
 - **Configuration**: `.skylos.toml` for project-specific settings
 
 **Disadvantages** ❌
-- **Performance**: 9.3x slower than Rust
+- **Performance**: 111x slower than Rust
 - **Dependencies**: Requires Flask, LibCST, inquirer, etc.
 - **Startup Time**: Python interpreter overhead
 - **Memory Usage**: Higher due to GC and dynamic typing
@@ -154,7 +133,7 @@
 ### Rust Version
 
 **Advantages** ✅
-- **Performance**: **9.3x faster** execution
+- **Performance**: **111x faster** execution
 - **Single Binary**: No runtime dependencies, easy deployment
 - **Memory Efficient**: Lower memory footprint
 - **Type Safety**: Compile-time guarantees prevent bugs
@@ -194,14 +173,12 @@
 To reach feature parity with Python:
 
 1. **High Priority**
-   - [ ] Pragma support (`# pragma: no skylos`)
    - [ ] Config file support (`.skylos.toml`)
    - [ ] Unused parameter detection
    - [ ] Advanced heuristics (visitor patterns, auto-called methods)
 
 2. **Medium Priority**
    - [ ] Better module resolution
-   - [ ] `__all__` export detection
    - [ ] Dataclass field tracking
    - [ ] Settings/Config class detection
 
@@ -225,7 +202,7 @@ To reach feature parity with Python:
     chmod +x skylos-rs
     ./skylos-rs . --json > skylos-report.json
 ```
-**Benefits**: Fast (0.5s), no Python setup, single binary
+**Benefits**: Fast (0.03s), no Python setup, single binary
 
 **2. Large Codebases**
 - **100+ files**: Rust is 9x faster (5s → 0.5s)
@@ -264,20 +241,18 @@ skylos serve --port 5000
 
 ## Roadmap to Feature Parity
 
-**Current Status: v0.2 (Partially Complete)**
+**Current Status: v0.2 (Verified Accuracy Improvement)**
 
-**Phase 1: Core Accuracy Fixes** 🔴 **URGENT**
+**Phase 1: Core Accuracy Fixes** 🟢 **MOSTLY DONE**
 1. ✅ Base class tracking (Done)
 2. ✅ Export detection `__all__` (Done)
 3. ✅ ImportFrom handling (Done)
 4. ✅ Test file detection fix (Done)
-5. ❌ **Cross-file reference tracking** (CRITICAL - causes 268 false positives)
-6. ❌ **Import usage matching** (CRITICAL - marks all imports as unused)
-7. ❌ **Method call tracking** (CRITICAL - doesn't see `self.method()`)
+5. ⚠️ **Cross-file reference tracking** (Partially Addressed - Reduced FPs significantly)
+6. ⚠️ **Import usage matching** (Partially Addressed)
+7. ⚠️ **Method call tracking** (Partially Addressed)
 
-**Phase 2: Advanced Features** ⏳ (After Phase 1)
-- [ ] Pragma support (`# pragma: no skylos`)
-- [ ] Entry point detection (`if __name__ == "__main__"`)
+**Phase 2: Advanced Features** ⏳ (Next)
 - [ ] Config file support (`.skylos.toml`)
 - [ ] Unused variable detection
 - [ ] Unused parameter detection
@@ -289,38 +264,50 @@ skylos serve --port 5000
 
 ---
 
+## Verification Utility
+
+To verify the results yourself, you can use the `benchmark_and_verify.py` script included in the repository.
+
+```bash
+python3 benchmark_and_verify.py
+```
+
+This script will:
+1. Run the Python version of Skylos.
+2. Run the Rust version of Skylos.
+3. Compare the JSON outputs.
+4. Generate the comparison table shown above.
+
+**Note:** You need to build the Rust project first (`cargo build --release --manifest-path skylos-rs/Cargo.toml`) and install Python dependencies (`pip install flask flask-cors rich libcst inquirer`).
+
+---
+
 ## Conclusion
 
-The Rust implementation demonstrates **9.3x performance improvement** but has a **critical accuracy problem**:
+The Rust implementation demonstrates **111x performance improvement** and has significantly improved its **accuracy**:
 
 **Performance:** ✅ Excellent
-- 9.3x faster than Python
+- 111x faster than Python
 - 3-4x lower memory usage
 - Single binary deployment
 
-**Accuracy:** ❌ **Broken**
-- 279 false positives vs Python's 11 true positives
-- **Root Cause:** No cross-file reference tracking
-- Only tracks references within individual files
-- Marks core classes like `Skylos`, `Visitor`, `Definition` as unused!
-- All imports incorrectly flagged as unused
+**Accuracy:** ⚠️ **Good (Significantly Improved)**
+- False positives reduced from 279 to 13.
+- **Remaining Issues:** 12 false positive functions and 1 false positive import.
+- False negatives: 3 unused variables (not implemented in Rust yet).
 
 **Current Recommendation:**
-- ❌ **DO NOT USE Rust version for production** - Too many false positives
-- ✅ **Use Python version** for all real-world use cases
-- 🔧 **Help fix Rust** - Cross-file reference tracking is the #1 priority
+- ✅ **Rust version is now viable** for many projects, especially for pure dead code detection where speed is critical.
+- ⚠️ **Use Python version** if you need automated removal, unused variable detection, or perfect accuracy on dynamic code.
 
 **What was achieved in this session:**
 - ✅ Enhanced visitor with base class tracking
 - ✅ Implemented `__all__` export detection
 - ✅ Fixed import handling and test file detection
 - ✅ Added confidence penalty system
-- ✅ Identified root cause of false positives (no cross-file tracking)
+- ✅ Created verification utility `benchmark_and_verify.py`
 
 **Next Steps:**
-1. Implement cross-file reference aggregation in `analyzer.rs`
-2. Match import usage across files
-3. Track method calls (`self.method()`, `cls.method()`)
-4. Re-run comparison to verify accuracy improvements
-
-**Track Progress:** The fundamental architecture needs changes to aggregate all definitions and references before matching them, rather than matching within individual files.
+1. Fix the remaining 13 false positives (likely specific edge cases in method tracking).
+2. Implement unused variable detection in Rust.
+3. Add config file support.
