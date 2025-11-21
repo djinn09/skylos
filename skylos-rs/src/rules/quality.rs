@@ -1,7 +1,7 @@
-use rustpython_ast::{self as ast, Stmt, ExceptHandler};
+use crate::utils::LineIndex;
+use rustpython_ast::{self as ast, ExceptHandler, Stmt};
 use serde::Serialize;
 use std::path::PathBuf;
-use crate::utils::LineIndex;
 
 /// Represents a code quality finding.
 #[derive(Debug, Clone, Serialize)]
@@ -190,7 +190,7 @@ impl<'a> QualityVisitor<'a> {
                 return;
             }
         }
-        
+
         self.findings.push(QualityFinding {
             message: msg.to_string(),
             rule_id: rule_id.to_string(),

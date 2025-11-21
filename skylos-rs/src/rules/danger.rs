@@ -1,7 +1,7 @@
+use crate::utils::LineIndex;
 use rustpython_ast::{self as ast, Expr, Stmt};
 use serde::Serialize;
 use std::path::PathBuf;
-use crate::utils::LineIndex;
 
 /// Represents a security vulnerability finding.
 #[derive(Debug, Clone, Serialize)]
@@ -55,7 +55,7 @@ impl<'a> DangerVisitor<'a> {
                 }
             }
             // Recurse for other statements if needed, currently simplified
-            _ => {} 
+            _ => {}
         }
     }
 
@@ -78,13 +78,13 @@ impl<'a> DangerVisitor<'a> {
     fn check_call(&mut self, call: &ast::ExprCall) {
         if let Some(name) = self.get_call_name(&call.func) {
             let line = self.line_index.line_index(call.range.start());
-            
+
             // SKY-D001: Avoid using eval/exec
             // These functions execute arbitrary code, which is a major security risk.
             if name == "eval" || name == "exec" {
                 self.add_finding("Avoid using eval/exec", "SKY-D001", line);
             }
-            
+
             // SKY-D002: subprocess with shell=True
             // This can lead to shell injection vulnerabilities if arguments are not sanitized.
             if name == "subprocess.call" || name == "subprocess.Popen" || name == "subprocess.run" {
@@ -92,11 +92,15 @@ impl<'a> DangerVisitor<'a> {
                 for keyword in &call.keywords {
                     if let Some(arg) = &keyword.arg {
                         if arg == "shell" {
-                             if let Expr::Constant(c) = &keyword.value {
-                                 if let ast::Constant::Bool(true) = c.value {
-                                     self.add_finding("subprocess with shell=True", "SKY-D002", line);
-                                 }
-                             }
+                            if let Expr::Constant(c) = &keyword.value {
+                                if let ast::Constant::Bool(true) = c.value {
+                                    self.add_finding(
+                                        "subprocess with shell=True",
+                                        "SKY-D002",
+                                        line,
+                                    );
+                                }
+                            }
                         }
                     }
                 }

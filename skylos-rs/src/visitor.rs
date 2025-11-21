@@ -127,8 +127,8 @@ impl<'a> SkylosVisitor<'a> {
         // 2. Dynamic Dispatch Patterns:
         //    - 'visit_' / 'leave_': Standard Visitor pattern (AST, LibCST)
         //    - 'on_': Standard Event Handler pattern (UI libs, callbacks)
-        let is_dynamic_pattern = simple_name.starts_with("visit_") 
-            || simple_name.starts_with("leave_") 
+        let is_dynamic_pattern = simple_name.starts_with("visit_")
+            || simple_name.starts_with("leave_")
             || simple_name.starts_with("on_");
 
         // 3. Standard Entry Points: Common names for script execution.
@@ -139,7 +139,7 @@ impl<'a> SkylosVisitor<'a> {
 
         // Decision: Is this implicitly used/exported?
         let is_implicitly_used = is_test || is_dynamic_pattern || is_standard_entry || is_dunder;
-        
+
         // Set reference count to 1 if implicitly used to prevent false positives.
         // This treats the definition as "used".
         let references = if is_implicitly_used { 1 } else { 0 };
@@ -153,7 +153,7 @@ impl<'a> SkylosVisitor<'a> {
             line,
             confidence: 100,
             references,
-            is_exported: is_implicitly_used, 
+            is_exported: is_implicitly_used,
             in_init,
             base_classes,
         };
@@ -282,73 +282,116 @@ impl<'a> SkylosVisitor<'a> {
             // Control Flow Handling - traverse bodies recursively
             Stmt::If(node) => {
                 self.visit_expr(&node.test);
-                for stmt in &node.body { self.visit_stmt(stmt); }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::For(node) => {
                 self.visit_expr(&node.iter);
-                for stmt in &node.body { self.visit_stmt(stmt); }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::AsyncFor(node) => {
                 self.visit_expr(&node.iter);
-                for stmt in &node.body { self.visit_stmt(stmt); }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::While(node) => {
                 self.visit_expr(&node.test);
-                for stmt in &node.body { self.visit_stmt(stmt); }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::With(node) => {
                 for item in &node.items {
                     self.visit_expr(&item.context_expr);
                 }
-                for stmt in &node.body { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::AsyncWith(node) => {
                 for item in &node.items {
                     self.visit_expr(&item.context_expr);
                 }
-                for stmt in &node.body { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::Try(node) => {
-                for stmt in &node.body { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
                 for handler in &node.handlers {
                     // Fix: Unwrap the Excepthandler enum
                     if let ast::ExceptHandler::ExceptHandler(handler_node) = handler {
                         if let Some(exc) = &handler_node.type_ {
                             self.visit_expr(exc);
                         }
-                        for stmt in &handler_node.body { self.visit_stmt(stmt); }
+                        for stmt in &handler_node.body {
+                            self.visit_stmt(stmt);
+                        }
                     }
                 }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
-                for stmt in &node.finalbody { self.visit_stmt(stmt); }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.finalbody {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::TryStar(node) => {
-                for stmt in &node.body { self.visit_stmt(stmt); }
+                for stmt in &node.body {
+                    self.visit_stmt(stmt);
+                }
                 for handler in &node.handlers {
                     // Fix: Unwrap the Excepthandler enum
                     if let ast::ExceptHandler::ExceptHandler(handler_node) = handler {
                         if let Some(exc) = &handler_node.type_ {
                             self.visit_expr(exc);
                         }
-                        for stmt in &handler_node.body { self.visit_stmt(stmt); }
+                        for stmt in &handler_node.body {
+                            self.visit_stmt(stmt);
+                        }
                     }
                 }
-                for stmt in &node.orelse { self.visit_stmt(stmt); }
-                for stmt in &node.finalbody { self.visit_stmt(stmt); }
+                for stmt in &node.orelse {
+                    self.visit_stmt(stmt);
+                }
+                for stmt in &node.finalbody {
+                    self.visit_stmt(stmt);
+                }
             }
             Stmt::Return(node) => {
-                if let Some(value) = &node.value { self.visit_expr(value); }
+                if let Some(value) = &node.value {
+                    self.visit_expr(value);
+                }
             }
             _ => {}
         }
     }
 
     // Helper function to handle shared logic between FunctionDef and AsyncFunctionDef
-    fn visit_function_def(&mut self, name: &str, body: &[Stmt], range_start: rustpython_ast::TextSize) {
+    fn visit_function_def(
+        &mut self,
+        name: &str,
+        body: &[Stmt],
+        range_start: rustpython_ast::TextSize,
+    ) {
         let qualified_name = self.get_qualified_name(name);
         let line = self.line_index.line_index(range_start);
 
@@ -390,7 +433,7 @@ impl<'a> SkylosVisitor<'a> {
             Expr::Attribute(node) => {
                 if let Expr::Name(name_node) = &*node.value {
                     let base_id = name_node.id.as_str();
-                    
+
                     // Case 1: Strict self.method usage inside a class context.
                     // We want to track references to methods of the current class.
                     if (base_id == "self" || base_id == "cls") && !self.class_stack.is_empty() {
@@ -403,20 +446,20 @@ impl<'a> SkylosVisitor<'a> {
                         parts.push(method_name.to_string());
                         let qualified = parts.join(".");
                         self.add_ref(qualified);
-                    } 
+                    }
                     // Case 2: External usage (obj.method or sys.exit)
                     else {
                         // Track "sys" from "sys.exit" (Fixes unused import)
                         self.add_ref(base_id.to_string());
-                        
+
                         // Track "sys.exit" (Specific attribute access)
                         let full_attr = format!("{}.{}", base_id, node.attr);
                         self.add_ref(full_attr);
 
                         // FIX: Loose Method Tracking
-                        // Track "analyze" from "s.analyze()". 
+                        // Track "analyze" from "s.analyze()".
                         // This fixes "unused function" when we can't infer the type of 's'.
-                        self.add_ref(node.attr.to_string()); 
+                        self.add_ref(node.attr.to_string());
                     }
                 }
                 self.visit_expr(&node.value);
@@ -424,7 +467,7 @@ impl<'a> SkylosVisitor<'a> {
             // FIX: Dynamic Dispatch / String References
             Expr::Constant(node) => {
                 if let ast::Constant::Str(s) = &node.value {
-                    // Heuristic: If a string looks like a simple identifier (no spaces/dots), 
+                    // Heuristic: If a string looks like a simple identifier (no spaces/dots),
                     // track it as a reference. This helps with getattr(self, "visit_" + name).
                     if !s.contains(' ') && !s.contains('.') && !s.is_empty() {
                         self.add_ref(s.to_string());
@@ -433,7 +476,9 @@ impl<'a> SkylosVisitor<'a> {
             }
             // Recursion Boilerplate - Ensure we visit children of all other expressions
             Expr::BoolOp(node) => {
-                for value in &node.values { self.visit_expr(value); }
+                for value in &node.values {
+                    self.visit_expr(value);
+                }
             }
             Expr::BinOp(node) => {
                 self.visit_expr(&node.left);
@@ -452,25 +497,33 @@ impl<'a> SkylosVisitor<'a> {
             }
             Expr::Dict(node) => {
                 for (key, value) in node.keys.iter().zip(&node.values) {
-                    if let Some(k) = key { self.visit_expr(k); }
+                    if let Some(k) = key {
+                        self.visit_expr(k);
+                    }
                     self.visit_expr(value);
                 }
             }
             Expr::Set(node) => {
-                for elt in &node.elts { self.visit_expr(elt); }
+                for elt in &node.elts {
+                    self.visit_expr(elt);
+                }
             }
             Expr::ListComp(node) => {
                 self.visit_expr(&node.elt);
                 for gen in &node.generators {
                     self.visit_expr(&gen.iter);
-                    for if_expr in &gen.ifs { self.visit_expr(if_expr); }
+                    for if_expr in &gen.ifs {
+                        self.visit_expr(if_expr);
+                    }
                 }
             }
             Expr::SetComp(node) => {
                 self.visit_expr(&node.elt);
                 for gen in &node.generators {
                     self.visit_expr(&gen.iter);
-                    for if_expr in &gen.ifs { self.visit_expr(if_expr); }
+                    for if_expr in &gen.ifs {
+                        self.visit_expr(if_expr);
+                    }
                 }
             }
             Expr::DictComp(node) => {
@@ -478,24 +531,32 @@ impl<'a> SkylosVisitor<'a> {
                 self.visit_expr(&node.value);
                 for gen in &node.generators {
                     self.visit_expr(&gen.iter);
-                    for if_expr in &gen.ifs { self.visit_expr(if_expr); }
+                    for if_expr in &gen.ifs {
+                        self.visit_expr(if_expr);
+                    }
                 }
             }
             Expr::GeneratorExp(node) => {
                 self.visit_expr(&node.elt);
                 for gen in &node.generators {
                     self.visit_expr(&gen.iter);
-                    for if_expr in &gen.ifs { self.visit_expr(if_expr); }
+                    for if_expr in &gen.ifs {
+                        self.visit_expr(if_expr);
+                    }
                 }
             }
             Expr::Await(node) => self.visit_expr(&node.value),
             Expr::Yield(node) => {
-                if let Some(value) = &node.value { self.visit_expr(value); }
+                if let Some(value) = &node.value {
+                    self.visit_expr(value);
+                }
             }
             Expr::YieldFrom(node) => self.visit_expr(&node.value),
             Expr::Compare(node) => {
                 self.visit_expr(&node.left);
-                for comparator in &node.comparators { self.visit_expr(comparator); }
+                for comparator in &node.comparators {
+                    self.visit_expr(comparator);
+                }
             }
             Expr::Subscript(node) => {
                 self.visit_expr(&node.value);
@@ -503,18 +564,30 @@ impl<'a> SkylosVisitor<'a> {
             }
             Expr::FormattedValue(node) => self.visit_expr(&node.value),
             Expr::JoinedStr(node) => {
-                for value in &node.values { self.visit_expr(value); }
+                for value in &node.values {
+                    self.visit_expr(value);
+                }
             }
             Expr::List(node) => {
-                for elt in &node.elts { self.visit_expr(elt); }
+                for elt in &node.elts {
+                    self.visit_expr(elt);
+                }
             }
             Expr::Tuple(node) => {
-                for elt in &node.elts { self.visit_expr(elt); }
+                for elt in &node.elts {
+                    self.visit_expr(elt);
+                }
             }
             Expr::Slice(node) => {
-                if let Some(lower) = &node.lower { self.visit_expr(lower); }
-                if let Some(upper) = &node.upper { self.visit_expr(upper); }
-                if let Some(step) = &node.step { self.visit_expr(step); }
+                if let Some(lower) = &node.lower {
+                    self.visit_expr(lower);
+                }
+                if let Some(upper) = &node.upper {
+                    self.visit_expr(upper);
+                }
+                if let Some(step) = &node.step {
+                    self.visit_expr(step);
+                }
             }
             _ => {}
         }

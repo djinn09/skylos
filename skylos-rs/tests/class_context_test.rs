@@ -1,6 +1,6 @@
-use skylos_rs::visitor::SkylosVisitor;
-use skylos_rs::utils::LineIndex;
 use rustpython_parser::{parse, Mode};
+use skylos_rs::utils::LineIndex;
+use skylos_rs::visitor::SkylosVisitor;
 use std::path::PathBuf;
 
 #[test]
@@ -14,8 +14,12 @@ class MyClass:
         self.my_method()
 "#;
     let line_index = LineIndex::new(source);
-    let mut visitor = SkylosVisitor::new(PathBuf::from("test.py"), "test_module".to_string(), &line_index);
-    
+    let mut visitor = SkylosVisitor::new(
+        PathBuf::from("test.py"),
+        "test_module".to_string(),
+        &line_index,
+    );
+
     let ast = parse(source, Mode::Module, "test.py").unwrap();
     if let rustpython_ast::Mod::Module(module) = ast {
         for stmt in module.body {
@@ -24,7 +28,11 @@ class MyClass:
     }
 
     // Check definitions
-    let defs: Vec<String> = visitor.definitions.iter().map(|d| d.full_name.clone()).collect();
+    let defs: Vec<String> = visitor
+        .definitions
+        .iter()
+        .map(|d| d.full_name.clone())
+        .collect();
     println!("Definitions: {:?}", defs);
     assert!(defs.contains(&"test_module.MyClass".to_string()));
     assert!(defs.contains(&"test_module.MyClass.my_method".to_string()));
